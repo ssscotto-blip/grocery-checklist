@@ -13,8 +13,18 @@
   --paper: #fff;
   --line: #222;
   --muted: #333;
+  --field: #fff;
   --tap: 52px;
   --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+html[data-theme="dark"] {
+  --ink: #f5f2ea;
+  --bg: #0e0e0e;
+  --paper: #1a1a1a;
+  --line: #e6e0d4;
+  --muted: #c9c3b6;
+  --field: #242424;
 }
 
 * {
@@ -32,19 +42,33 @@ body {
 .app {
   max-width: 480px;
   margin: 0 auto;
-  padding: 16px 14px calc(24px + var(--safe-b));
+  padding: 0 14px calc(24px + var(--safe-b));
+}
+
+.chrome {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  margin-bottom: 12px;
 }
 
 .top {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
+}
+
+.brand h1 {
+  margin: 0;
 }
 
 h1,
-h2 {
+h2,
+h3 {
   margin: 0;
 }
 
@@ -57,9 +81,39 @@ h2 {
   margin-bottom: 8px;
 }
 
+h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
 .count {
-  margin: 0;
+  margin: 2px 0 0;
   font-weight: 700;
+}
+
+.theme-btn {
+  min-width: 96px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  flex: 1;
+  min-height: var(--tap);
+  font: inherit;
+  font-weight: 700;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.tab.is-on {
+  background: var(--ink);
+  color: var(--bg);
 }
 
 .sr {
@@ -72,7 +126,8 @@ h2 {
 
 .add-block,
 .tess,
-.park {
+.park,
+.trip-block {
   background: var(--paper);
   border: 2px solid var(--line);
   padding: 12px;
@@ -90,7 +145,7 @@ textarea {
   width: 100%;
   font: inherit;
   color: var(--ink);
-  background: #fff;
+  background: var(--field);
   border: 2px solid var(--line);
   padding: 12px;
   margin-bottom: 8px;
@@ -116,20 +171,23 @@ textarea {
   min-height: var(--tap);
   padding: 10px 12px;
   border: 2px solid var(--line);
-  background: #fff;
+  background: var(--paper);
   color: var(--ink);
   cursor: pointer;
+}
+
+.btn-row .btn {
   flex: 1;
 }
 
 .btn.primary {
   background: var(--ink);
-  color: #fff;
+  color: var(--bg);
 }
 
 .btn.danger {
-  background: #fff;
-  color: #111;
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .list {
@@ -138,7 +196,8 @@ textarea {
   padding: 0;
 }
 
-.item {
+.item,
+.report-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -147,10 +206,13 @@ textarea {
   padding: 12px 10px;
   margin-bottom: 8px;
   border: 2px solid var(--line);
-  background: #fff;
+  background: var(--paper);
   text-align: left;
   font: inherit;
   color: inherit;
+}
+
+.item {
   cursor: pointer;
 }
 
@@ -176,6 +238,12 @@ textarea {
   color: var(--muted);
   font-weight: 500;
   font-size: 0.95rem;
+}
+
+.price {
+  font-weight: 700;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .empty {
@@ -213,7 +281,7 @@ textarea {
   flex: 1;
   border: 2px solid var(--line);
   padding: 10px;
-  background: #fff;
+  background: var(--paper);
 }
 
 .park-row button {
@@ -240,57 +308,124 @@ code {
   margin-top: 8px;
 }
 
+.trip-block .btn.primary {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.report-item {
+  display: block;
+}
+
+.report-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.group {
+  margin-bottom: 18px;
+}
+
+.group .empty {
+  margin: 0;
+  padding: 8px 0;
+}
+
   </style>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem("grocery-theme") === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div class="app">
-    <header class="top">
-      <h1>Grocery</h1>
-      <p class="count" id="count"></p>
-    </header>
+    <div class="chrome">
+      <header class="top">
+        <div class="brand">
+          <h1>Grocery</h1>
+          <p class="count" id="count"></p>
+        </div>
+        <button type="button" class="btn theme-btn" id="theme-btn" aria-pressed="false">Night</button>
+      </header>
+      <nav class="tabs" aria-label="Sections">
+        <button type="button" class="tab is-on" id="tab-list" data-tab="list">List</button>
+        <button type="button" class="tab" id="tab-trip" data-tab="trip">Trip</button>
+      </nav>
+    </div>
 
-    <section class="add-block" aria-label="Add item">
-      <label for="add-name">Add item or note</label>
-      <input id="add-name" type="text" placeholder="Item name or what you saw" autocomplete="off">
-      <input id="add-note" type="text" placeholder="Note (optional)" autocomplete="off">
-      <div class="btn-row">
-        <button type="button" class="btn primary" id="add-item">Add to list</button>
-        <button type="button" class="btn" id="add-park">Saw, didn’t buy</button>
-      </div>
-    </section>
+    <div id="view-list">
+      <section class="add-block" aria-label="Add item">
+        <label for="add-name">Add item or note</label>
+        <input id="add-name" type="text" placeholder="Item name or what you saw" autocomplete="off">
+        <input id="add-note" type="text" placeholder="Note (optional)" autocomplete="off">
+        <div class="btn-row">
+          <button type="button" class="btn primary" id="add-item">Add to list</button>
+          <button type="button" class="btn" id="add-park">Saw, didn’t buy</button>
+        </div>
+      </section>
 
-    <section aria-label="To get">
-      <h2 class="sr">To get</h2>
-      <ul id="active-list" class="list"></ul>
-      <p id="active-empty" class="empty" hidden>List is empty. Add something, or load a week’s list below.</p>
-    </section>
+      <section aria-label="To get">
+        <h2 class="sr">To get</h2>
+        <ul id="active-list" class="list"></ul>
+        <p id="active-empty" class="empty" hidden>List is empty. Add something, or load a week’s list below.</p>
+      </section>
 
-    <section id="park-section" class="park" hidden>
-      <h2>Saw, didn’t buy</h2>
-      <ul id="park-list" class="note-list"></ul>
-    </section>
+      <section id="park-section" class="park" hidden>
+        <h2>Saw, didn’t buy</h2>
+        <ul id="park-list" class="note-list"></ul>
+      </section>
 
-    <section id="done-section" hidden>
-      <button type="button" class="done-toggle" id="done-toggle" aria-expanded="false">
-        Done (<span id="done-count">0</span>)
-      </button>
-      <ul id="done-list" class="list done-list" hidden></ul>
-    </section>
+      <section id="done-section" hidden>
+        <button type="button" class="done-toggle" id="done-toggle" aria-expanded="false">
+          Done (<span id="done-count">0</span>)
+        </button>
+        <ul id="done-list" class="list done-list" hidden></ul>
+      </section>
 
-    <section class="tess" aria-label="Load or replace list">
-      <h2>Load / replace list</h2>
-      <p class="hint">For Tess / Kitchen: paste one item per line, or a JSON array. This replaces the shopping list.</p>
-      <textarea id="load-text" rows="8" placeholder="Eggs&#10;Milk&#10;Bananas"></textarea>
-      <div class="btn-row">
-        <button type="button" class="btn primary" id="replace-btn">Replace list</button>
-        <button type="button" class="btn danger" id="clear-btn">Clear list</button>
-      </div>
-      <p id="load-msg" class="msg" hidden></p>
-    </section>
+      <section class="tess" aria-label="Load or replace list">
+        <h2>Load / replace list</h2>
+        <p class="hint">For Tess / Kitchen: paste one item per line, or a JSON array of <code>{"name":"…","note":""}</code>. This replaces the shopping list. “Saw, didn’t buy” notes stay unless you clear them.</p>
+        <textarea id="load-text" rows="8" placeholder="Eggs&#10;Milk&#10;Bananas"></textarea>
+        <div class="btn-row">
+          <button type="button" class="btn primary" id="replace-btn">Replace list</button>
+          <button type="button" class="btn danger" id="clear-btn">Clear list</button>
+        </div>
+        <p id="load-msg" class="msg" hidden></p>
+      </section>
+    </div>
+
+    <div id="view-trip" hidden>
+      <section class="trip-block">
+        <h2>This trip</h2>
+        <p class="hint">After shopping, send a receipt photo to Shepherd. Paste the JSON he returns here.</p>
+        <label for="trip-store">Store name (optional)</label>
+        <input id="trip-store" type="text" placeholder="H-E-B, Walmart, …" autocomplete="off">
+        <button type="button" class="btn primary" id="snapshot-btn">Start trip / snapshot</button>
+        <p id="snapshot-meta" class="hint">No snapshot yet. Snapshot saves the current list (names, notes, checked) with a time.</p>
+      </section>
+
+      <section class="trip-block">
+        <h2>Paste report</h2>
+        <label for="report-text">Shepherd trip-report JSON</label>
+        <textarea id="report-text" rows="8" placeholder='{"store":"Store name","date":"2026-09-10","items":[{"name":"Eggs","price":3.49,"qty":1}]}'></textarea>
+        <button type="button" class="btn primary" id="apply-report">Apply report</button>
+        <p id="report-msg" class="msg" hidden></p>
+      </section>
+
+      <section id="report-view"></section>
+    </div>
   </div>
   <script>
 (() => {
   const KEY = "grocery-checklist-v1-2026-09-10";
+  const THEME_KEY = "grocery-theme";
 
   const SEED = [
     { name: "Eggs", note: "1 dozen — need 8 for tacos" },
@@ -313,8 +448,28 @@ code {
     { name: "Coke Zero", note: "~4/day taper week — not a huge stockpile" },
   ];
 
+  const FLUFF = new Set([
+    "oz", "ounce", "ounces", "lb", "lbs", "pound", "pounds", "ct", "count",
+    "pk", "pack", "pkg", "package", "dozen", "gal", "gallon", "quart", "pint",
+    "bag", "jar", "loaf", "bunch", "can", "bottle", "box", "fresh", "frozen",
+    "large", "extra", "jumbo", "small", "medium", "organic", "ea", "each",
+    "the", "a", "an", "of", "and", "with", "for", "if", "low", "need", "your",
+    "pick", "size", "family", "value", "select", "grade", "boneless", "skinless",
+  ]);
+
+  const OTHER_PRODUCT = new Set([
+    "juice", "soda", "sauce", "soup", "season", "seasoning", "mix", "cream",
+    "ice", "candy", "yogurt", "butter", "oil", "spray", "wash", "soap", "broth",
+    "stock",
+  ]);
+
   const els = {
     count: document.getElementById("count"),
+    themeBtn: document.getElementById("theme-btn"),
+    tabList: document.getElementById("tab-list"),
+    tabTrip: document.getElementById("tab-trip"),
+    viewList: document.getElementById("view-list"),
+    viewTrip: document.getElementById("view-trip"),
     addName: document.getElementById("add-name"),
     addNote: document.getElementById("add-note"),
     addItem: document.getElementById("add-item"),
@@ -331,9 +486,17 @@ code {
     replaceBtn: document.getElementById("replace-btn"),
     clearBtn: document.getElementById("clear-btn"),
     loadMsg: document.getElementById("load-msg"),
+    tripStore: document.getElementById("trip-store"),
+    snapshotBtn: document.getElementById("snapshot-btn"),
+    snapshotMeta: document.getElementById("snapshot-meta"),
+    reportText: document.getElementById("report-text"),
+    applyReport: document.getElementById("apply-report"),
+    reportMsg: document.getElementById("report-msg"),
+    reportView: document.getElementById("report-view"),
   };
 
   let doneOpen = false;
+  let tab = "list";
 
   function uid() {
     return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
@@ -350,8 +513,22 @@ code {
       .filter((row) => row.name);
   }
 
+  function readSavedTheme() {
+    try {
+      const direct = localStorage.getItem(THEME_KEY);
+      if (direct === "dark" || direct === "light") return direct;
+    } catch {}
+    return "light";
+  }
+
   function defaultState() {
-    return { items: makeItems(SEED), park: [] };
+    return {
+      items: makeItems(SEED),
+      park: [],
+      theme: readSavedTheme(),
+      snapshot: null,
+      report: null,
+    };
   }
 
   function load() {
@@ -364,6 +541,10 @@ code {
     try {
       const data = JSON.parse(raw);
       if (!data || !Array.isArray(data.items)) return defaultState();
+      const theme =
+        data.theme === "dark" || data.theme === "light"
+          ? data.theme
+          : readSavedTheme();
       return {
         items: data.items.map((item) => ({
           id: item.id || uid(),
@@ -372,11 +553,16 @@ code {
           done: Boolean(item.done),
         })),
         park: Array.isArray(data.park)
-          ? data.park.map((n) => ({
-              id: n.id || uid(),
-              text: String(n.text || "").trim(),
-            })).filter((n) => n.text)
+          ? data.park
+              .map((n) => ({
+                id: n.id || uid(),
+                text: String(n.text || "").trim(),
+              }))
+              .filter((n) => n.text)
           : [],
+        theme,
+        snapshot: data.snapshot || null,
+        report: data.report || null,
       };
     } catch {
       return defaultState();
@@ -385,6 +571,9 @@ code {
 
   function save(state) {
     localStorage.setItem(KEY, JSON.stringify(state));
+    if (state.theme === "dark" || state.theme === "light") {
+      localStorage.setItem(THEME_KEY, state.theme);
+    }
   }
 
   function escapeHtml(str) {
@@ -395,19 +584,102 @@ code {
       .replace(/"/g, "&quot;");
   }
 
+  function stem(token) {
+    if (token.endsWith("ies") && token.length > 4) return token.slice(0, -3) + "y";
+    if (token.endsWith("es") && token.length > 4) return token.slice(0, -2);
+    if (token.endsWith("s") && token.length > 3) return token.slice(0, -1);
+    return token;
+  }
+
+  function tokensOf(name) {
+    return String(name || "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((t) => t && !/^\d+$/.test(t) && !FLUFF.has(t) && !FLUFF.has(stem(t)))
+      .map(stem);
+  }
+
+  function variants(name) {
+    const parts = String(name || "")
+      .split(/\s+or\s+/i)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    return parts.length ? parts : [String(name || "")];
+  }
+
+  function scoreNames(listName, receiptName) {
+    let best = 0;
+    const receiptTok = tokensOf(receiptName);
+    if (!receiptTok.length) return 0;
+    const receiptSet = new Set(receiptTok);
+    for (const variant of variants(listName)) {
+      const listTok = tokensOf(variant);
+      if (!listTok.length) continue;
+      const listSet = new Set(listTok);
+      const listJoined = listTok.join(" ");
+      const receiptJoined = receiptTok.join(" ");
+      if (listJoined === receiptJoined) {
+        best = Math.max(best, 100);
+        continue;
+      }
+      const smaller = listTok.length <= receiptTok.length ? listSet : receiptSet;
+      const larger = listTok.length <= receiptTok.length ? receiptSet : listSet;
+      const largerTok = listTok.length <= receiptTok.length ? receiptTok : listTok;
+      let hit = 0;
+      for (const t of smaller) if (larger.has(t)) hit += 1;
+      if (hit === smaller.size) {
+        const extras = largerTok.filter((t) => !smaller.has(t));
+        if (extras.some((t) => OTHER_PRODUCT.has(t))) continue;
+        if (smaller.size === larger.size) best = Math.max(best, 100);
+        else if (smaller.size >= 2) best = Math.max(best, 85);
+        else best = Math.max(best, 70);
+        continue;
+      }
+      if (hit >= 2 && hit / smaller.size >= 0.5) best = Math.max(best, 60);
+    }
+    return best;
+  }
+
+  function matchTrip(listItems, receiptItems) {
+    const pairs = [];
+    listItems.forEach((item, li) => {
+      receiptItems.forEach((rec, ri) => {
+        const score = scoreNames(item.name, rec.name);
+        if (score >= 60) pairs.push({ li, ri, score });
+      });
+    });
+    pairs.sort((a, b) => b.score - a.score);
+    const usedL = new Set();
+    const usedR = new Set();
+    const bought = [];
+    for (const p of pairs) {
+      if (usedL.has(p.li) || usedR.has(p.ri)) continue;
+      usedL.add(p.li);
+      usedR.add(p.ri);
+      bought.push({ list: listItems[p.li], receipt: receiptItems[p.ri], score: p.score });
+    }
+    const missing = listItems.filter((_, i) => !usedL.has(i));
+    const extras = receiptItems.filter((_, i) => !usedR.has(i));
+    return { bought, missing, extras };
+  }
+
   function parsePaste(text) {
     const t = text.trim();
     if (!t) return [];
     if (t.startsWith("[")) {
       const data = JSON.parse(t);
       if (!Array.isArray(data)) throw new Error("JSON must be an array");
-      return data.map((row) => {
-        if (typeof row === "string") return { name: row.trim(), note: "" };
-        return {
-          name: String(row && row.name ? row.name : "").trim(),
-          note: String(row && row.note ? row.note : "").trim(),
-        };
-      }).filter((row) => row.name);
+      return data
+        .map((row) => {
+          if (typeof row === "string") return { name: row.trim(), note: "" };
+          return {
+            name: String(row && row.name ? row.name : "").trim(),
+            note: String(row && row.note ? row.note : "").trim(),
+          };
+        })
+        .filter((row) => row.name);
     }
     return t
       .split(/\r?\n/)
@@ -416,8 +688,73 @@ code {
       .map((name) => ({ name, note: "" }));
   }
 
-  function render() {
-    const state = load();
+  function parseReport(text) {
+    const t = text.trim();
+    if (!t) throw new Error("empty");
+    let data;
+    try {
+      data = JSON.parse(t);
+    } catch {
+      const start = t.indexOf("{");
+      const end = t.lastIndexOf("}");
+      if (start < 0 || end <= start) throw new Error("not json");
+      data = JSON.parse(t.slice(start, end + 1));
+    }
+    if (!data || !Array.isArray(data.items)) throw new Error("need items array");
+    return {
+      store: String(data.store || "").trim(),
+      date: String(data.date || "").trim(),
+      items: data.items
+        .map((row) => ({
+          name: String(row && row.name ? row.name : "").trim(),
+          price: row && row.price != null && row.price !== "" ? row.price : null,
+          qty: row && row.qty != null && row.qty !== "" ? row.qty : 1,
+        }))
+        .filter((row) => row.name),
+    };
+  }
+
+  function formatPrice(price) {
+    if (price == null || price === "") return "";
+    const n = Number(price);
+    if (Number.isFinite(n)) return "$" + n.toFixed(2);
+    return String(price);
+  }
+
+  function formatWhen(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  function applyTheme(theme) {
+    const t = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", t === "dark" ? "#0e0e0e" : "#111111");
+    els.themeBtn.textContent = t === "dark" ? "Day" : "Night";
+    els.themeBtn.setAttribute("aria-pressed", t === "dark" ? "true" : "false");
+    els.themeBtn.setAttribute(
+      "aria-label",
+      t === "dark" ? "Switch to day view" : "Switch to night view"
+    );
+  }
+
+  function setTab(next) {
+    tab = next === "trip" ? "trip" : "list";
+    els.viewList.hidden = tab !== "list";
+    els.viewTrip.hidden = tab !== "trip";
+    els.tabList.classList.toggle("is-on", tab === "list");
+    els.tabTrip.classList.toggle("is-on", tab === "trip");
+  }
+
+  function renderList(state) {
     const active = state.items.filter((i) => !i.done);
     const done = state.items.filter((i) => i.done);
 
@@ -470,6 +807,107 @@ code {
       .join("");
   }
 
+  function renderTrip(state) {
+    if (state.snapshot) {
+      const n = state.snapshot.items ? state.snapshot.items.length : 0;
+      const store = state.snapshot.store ? ` · ${state.snapshot.store}` : "";
+      els.snapshotMeta.textContent = `Snapshot: ${formatWhen(state.snapshot.at)} · ${n} items${store}`;
+      if (state.snapshot.store && !els.tripStore.value) {
+        els.tripStore.value = state.snapshot.store;
+      }
+    } else {
+      els.snapshotMeta.textContent =
+        "No snapshot yet. Snapshot saves the current list (names, notes, checked) with a time.";
+    }
+
+    if (!state.report) {
+      els.reportView.innerHTML = `<p class="empty">No report applied yet.</p>`;
+      return;
+    }
+
+    const listItems =
+      state.snapshot && Array.isArray(state.snapshot.items)
+        ? state.snapshot.items
+        : state.items;
+    const usedSnapshot = !!(state.snapshot && Array.isArray(state.snapshot.items));
+    const result = matchTrip(listItems, state.report.items || []);
+    const reportStore = state.report.store || "";
+    const reportDate = state.report.date || "";
+
+    const boughtRows = result.bought
+      .map((row) => {
+        const price = formatPrice(row.receipt.price);
+        const qty = row.receipt.qty != null && Number(row.receipt.qty) !== 1
+          ? ` ×${row.receipt.qty}`
+          : "";
+        const receiptName =
+          tokensOf(row.list.name).join(" ") === tokensOf(row.receipt.name).join(" ")
+            ? ""
+            : `<span class="note">receipt: ${escapeHtml(row.receipt.name)}</span>`;
+        const checked = row.list.done
+          ? `<span class="note">checked off on list</span>`
+          : `<span class="note">not checked off</span>`;
+        return `<li class="report-item">
+          <div class="report-top">
+            <span class="name">${escapeHtml(row.list.name)}</span>
+            <span class="price">${escapeHtml(price)}${escapeHtml(qty)}</span>
+          </div>
+          ${receiptName}${checked}
+        </li>`;
+      })
+      .join("");
+
+    const missingRows = result.missing
+      .map((item) => {
+        const checked = item.done ? "checked off, not on receipt" : "still open, not on receipt";
+        return `<li class="report-item">
+          <span class="name">${escapeHtml(item.name)}</span>
+          ${item.note ? `<span class="note">${escapeHtml(item.note)}</span>` : ""}
+          <span class="note">${checked}</span>
+        </li>`;
+      })
+      .join("");
+
+    const extraRows = result.extras
+      .map((rec) => {
+        const price = formatPrice(rec.price);
+        const qty = rec.qty != null && Number(rec.qty) !== 1 ? ` ×${rec.qty}` : "";
+        return `<li class="report-item">
+          <div class="report-top">
+            <span class="name">${escapeHtml(rec.name)}</span>
+            <span class="price">${escapeHtml(price)}${escapeHtml(qty)}</span>
+          </div>
+        </li>`;
+      })
+      .join("");
+
+    els.reportView.innerHTML = `
+      <p class="hint">${escapeHtml(reportStore || "Store not set")} · ${escapeHtml(reportDate || "no date")} · matched against ${usedSnapshot ? "snapshot" : "current list"}</p>
+      <section class="group">
+        <h3>Bought (${result.bought.length})</h3>
+        ${boughtRows ? `<ul class="list">${boughtRows}</ul>` : `<p class="empty">None.</p>`}
+      </section>
+      <section class="group">
+        <h3>On list, not on receipt (${result.missing.length})</h3>
+        <p class="hint">Might have been forgotten or out of stock.</p>
+        ${missingRows ? `<ul class="list">${missingRows}</ul>` : `<p class="empty">None.</p>`}
+      </section>
+      <section class="group">
+        <h3>On receipt, not on list (${result.extras.length})</h3>
+        <p class="hint">Extras. Phase 3 will bank these later; for now they are just listed.</p>
+        ${extraRows ? `<ul class="list">${extraRows}</ul>` : `<p class="empty">None.</p>`}
+      </section>
+    `;
+  }
+
+  function render() {
+    const state = load();
+    applyTheme(state.theme);
+    setTab(tab);
+    renderList(state);
+    renderTrip(state);
+  }
+
   function addToList() {
     const name = els.addName.value.trim();
     const note = els.addNote.value.trim();
@@ -512,12 +950,22 @@ code {
     render();
   }
 
-  function showMsg(text) {
-    els.loadMsg.hidden = false;
-    els.loadMsg.textContent = text;
+  function showMsg(el, text) {
+    el.hidden = false;
+    el.textContent = text;
   }
 
-  document.getElementById("active-list").addEventListener("click", (ev) => {
+  els.themeBtn.addEventListener("click", () => {
+    const state = load();
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    save(state);
+    applyTheme(state.theme);
+  });
+
+  els.tabList.addEventListener("click", () => setTab("list"));
+  els.tabTrip.addEventListener("click", () => setTab("trip"));
+
+  els.activeList.addEventListener("click", (ev) => {
     const btn = ev.target.closest("[data-toggle]");
     if (btn) toggleItem(btn.getAttribute("data-toggle"));
   });
@@ -562,7 +1010,7 @@ code {
     try {
       const rows = parsePaste(els.loadText.value);
       if (!rows.length) {
-        showMsg("Nothing to load. Paste items first.");
+        showMsg(els.loadMsg, "Nothing to load. Paste items first.");
         return;
       }
       if (!confirm(`Replace the current list with ${rows.length} item(s)?`)) return;
@@ -570,10 +1018,10 @@ code {
       state.items = makeItems(rows);
       save(state);
       doneOpen = false;
-      showMsg(`Loaded ${rows.length} item(s).`);
+      showMsg(els.loadMsg, `Loaded ${rows.length} item(s).`);
       render();
     } catch (err) {
-      showMsg("Could not parse that. Use one item per line, or a JSON array.");
+      showMsg(els.loadMsg, "Could not parse that. Use one item per line, or a JSON array.");
     }
   });
 
@@ -583,10 +1031,64 @@ code {
     state.items = [];
     save(state);
     doneOpen = false;
-    showMsg("List cleared.");
+    showMsg(els.loadMsg, "List cleared.");
     render();
   });
 
+  els.snapshotBtn.addEventListener("click", () => {
+    const state = load();
+    if (state.snapshot && !confirm("Replace the saved trip snapshot with the current list?")) {
+      return;
+    }
+    state.snapshot = {
+      at: new Date().toISOString(),
+      store: els.tripStore.value.trim(),
+      items: state.items.map((i) => ({
+        id: i.id,
+        name: i.name,
+        note: i.note,
+        done: i.done,
+      })),
+    };
+    save(state);
+    showMsg(els.reportMsg, "Snapshot saved.");
+    render();
+  });
+
+  els.applyReport.addEventListener("click", () => {
+    try {
+      const report = parseReport(els.reportText.value);
+      if (!report.items.length) {
+        showMsg(els.reportMsg, "That JSON has no items.");
+        return;
+      }
+      const state = load();
+      if (!state.snapshot) {
+        state.snapshot = {
+          at: new Date().toISOString(),
+          store: els.tripStore.value.trim() || report.store,
+          items: state.items.map((i) => ({
+            id: i.id,
+            name: i.name,
+            note: i.note,
+            done: i.done,
+          })),
+        };
+      }
+      if (report.store && !state.snapshot.store) state.snapshot.store = report.store;
+      state.report = report;
+      save(state);
+      showMsg(els.reportMsg, `Applied ${report.items.length} receipt item(s).`);
+      render();
+    } catch (err) {
+      showMsg(
+        els.reportMsg,
+        "Could not parse that. Paste JSON like {\"store\":\"…\",\"date\":\"…\",\"items\":[…]}"
+      );
+    }
+  });
+
+  applyTheme(readSavedTheme());
   render();
 })();
 
