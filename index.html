@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Grocery — Sep 10</title>
+  <style>
+:root {
+  --ink: #111;
+  --bg: #f7f4ee;
+  --paper: #fff;
+  --line: #222;
+  --muted: #333;
+  --tap: 52px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 18px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 14px calc(24px + var(--safe-b));
+}
+
+.top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.count {
+  margin: 0;
+  font-weight: 700;
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.add-block,
+.tess,
+.park {
+  background: var(--paper);
+  border: 2px solid var(--line);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+input,
+textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--line);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+input {
+  min-height: var(--tap);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn,
+.done-toggle {
+  font: inherit;
+  font-weight: 700;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  flex: 1;
+}
+
+.btn.primary {
+  background: var(--ink);
+  color: #fff;
+}
+
+.btn.danger {
+  background: #fff;
+  color: #111;
+}
+
+.list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 10px;
+  margin-bottom: 8px;
+  border: 2px solid var(--line);
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.box {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  border: 3px solid var(--ink);
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.name {
+  font-weight: 700;
+}
+
+.note {
+  display: block;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.empty {
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+.done-toggle {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.done-list .item {
+  opacity: 0.9;
+}
+
+.done-list .name {
+  text-decoration: line-through;
+}
+
+.note-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.park-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 8px;
+}
+
+.park-text {
+  flex: 1;
+  border: 2px solid var(--line);
+  padding: 10px;
+  background: #fff;
+}
+
+.park-row button {
+  flex: 0 0 auto;
+  min-width: 52px;
+}
+
+.hint {
+  font-size: 0.95rem;
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+code {
+  font-size: 0.85em;
+}
+
+.msg {
+  margin: 10px 0 0;
+  font-weight: 700;
+}
+
+.tess {
+  margin-top: 8px;
+}
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <h1>Grocery</h1>
+      <p class="count" id="count"></p>
+    </header>
+
+    <section class="add-block" aria-label="Add item">
+      <label for="add-name">Add item or note</label>
+      <input id="add-name" type="text" placeholder="Item name or what you saw" autocomplete="off">
+      <input id="add-note" type="text" placeholder="Note (optional)" autocomplete="off">
+      <div class="btn-row">
+        <button type="button" class="btn primary" id="add-item">Add to list</button>
+        <button type="button" class="btn" id="add-park">Saw, didn’t buy</button>
+      </div>
+    </section>
+
+    <section aria-label="To get">
+      <h2 class="sr">To get</h2>
+      <ul id="active-list" class="list"></ul>
+      <p id="active-empty" class="empty" hidden>List is empty. Add something, or load a week’s list below.</p>
+    </section>
+
+    <section id="park-section" class="park" hidden>
+      <h2>Saw, didn’t buy</h2>
+      <ul id="park-list" class="note-list"></ul>
+    </section>
+
+    <section id="done-section" hidden>
+      <button type="button" class="done-toggle" id="done-toggle" aria-expanded="false">
+        Done (<span id="done-count">0</span>)
+      </button>
+      <ul id="done-list" class="list done-list" hidden></ul>
+    </section>
+
+    <section class="tess" aria-label="Load or replace list">
+      <h2>Load / replace list</h2>
+      <p class="hint">For Tess / Kitchen: paste one item per line, or a JSON array. This replaces the shopping list.</p>
+      <textarea id="load-text" rows="8" placeholder="Eggs&#10;Milk&#10;Bananas"></textarea>
+      <div class="btn-row">
+        <button type="button" class="btn primary" id="replace-btn">Replace list</button>
+        <button type="button" class="btn danger" id="clear-btn">Clear list</button>
+      </div>
+      <p id="load-msg" class="msg" hidden></p>
+    </section>
+  </div>
+  <script>
+(() => {
+  const KEY = "grocery-checklist-v1-2026-09-10";
+
+  const SEED = [
+    { name: "Eggs", note: "1 dozen — need 8 for tacos" },
+    { name: "Chorizo", note: "~12 oz" },
+    { name: "Chicken breasts", note: "2–3" },
+    { name: "Shredded cheese", note: "1 bag" },
+    { name: "Cheddar slices or block", note: "turkey melts" },
+    { name: "Deli turkey", note: "enough for a few sandwiches" },
+    { name: "Flour tortillas", note: "pack of 8+" },
+    { name: "7-grain whole wheat bread", note: "1 loaf" },
+    { name: "Cilantro", note: "1 bunch" },
+    { name: "Apples", note: "" },
+    { name: "Bananas", note: "" },
+    { name: "Grapes", note: "" },
+    { name: "Tomato", note: "fresh, for melts" },
+    { name: "Potatoes OR frozen corn", note: "your pick" },
+    { name: "Pickles", note: "if low" },
+    { name: "Salsa", note: "1 jar" },
+    { name: "Garlic powder", note: "if you don’t have it" },
+    { name: "Coke Zero", note: "~4/day taper week — not a huge stockpile" },
+  ];
+
+  const els = {
+    count: document.getElementById("count"),
+    addName: document.getElementById("add-name"),
+    addNote: document.getElementById("add-note"),
+    addItem: document.getElementById("add-item"),
+    addPark: document.getElementById("add-park"),
+    activeList: document.getElementById("active-list"),
+    activeEmpty: document.getElementById("active-empty"),
+    parkSection: document.getElementById("park-section"),
+    parkList: document.getElementById("park-list"),
+    doneSection: document.getElementById("done-section"),
+    doneToggle: document.getElementById("done-toggle"),
+    doneCount: document.getElementById("done-count"),
+    doneList: document.getElementById("done-list"),
+    loadText: document.getElementById("load-text"),
+    replaceBtn: document.getElementById("replace-btn"),
+    clearBtn: document.getElementById("clear-btn"),
+    loadMsg: document.getElementById("load-msg"),
+  };
+
+  let doneOpen = false;
+
+  function uid() {
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
+  }
+
+  function makeItems(rows) {
+    return rows
+      .map((row) => ({
+        id: uid(),
+        name: String(row.name || "").trim(),
+        note: String(row.note || "").trim(),
+        done: false,
+      }))
+      .filter((row) => row.name);
+  }
+
+  function defaultState() {
+    return { items: makeItems(SEED), park: [] };
+  }
+
+  function load() {
+    const raw = localStorage.getItem(KEY);
+    if (raw === null) {
+      const state = defaultState();
+      save(state);
+      return state;
+    }
+    try {
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.items)) return defaultState();
+      return {
+        items: data.items.map((item) => ({
+          id: item.id || uid(),
+          name: String(item.name || "").trim(),
+          note: String(item.note || "").trim(),
+          done: Boolean(item.done),
+        })),
+        park: Array.isArray(data.park)
+          ? data.park.map((n) => ({
+              id: n.id || uid(),
+              text: String(n.text || "").trim(),
+            })).filter((n) => n.text)
+          : [],
+      };
+    } catch {
+      return defaultState();
+    }
+  }
+
+  function save(state) {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function parsePaste(text) {
+    const t = text.trim();
+    if (!t) return [];
+    if (t.startsWith("[")) {
+      const data = JSON.parse(t);
+      if (!Array.isArray(data)) throw new Error("JSON must be an array");
+      return data.map((row) => {
+        if (typeof row === "string") return { name: row.trim(), note: "" };
+        return {
+          name: String(row && row.name ? row.name : "").trim(),
+          note: String(row && row.note ? row.note : "").trim(),
+        };
+      }).filter((row) => row.name);
+    }
+    return t
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((name) => ({ name, note: "" }));
+  }
+
+  function render() {
+    const state = load();
+    const active = state.items.filter((i) => !i.done);
+    const done = state.items.filter((i) => i.done);
+
+    els.count.textContent = `${active.length} left`;
+
+    els.activeList.innerHTML = active
+      .map(
+        (item) => `
+        <li>
+          <button type="button" class="item" data-toggle="${escapeHtml(item.id)}">
+            <span class="box" aria-hidden="true"></span>
+            <span>
+              <span class="name">${escapeHtml(item.name)}</span>
+              ${item.note ? `<span class="note">${escapeHtml(item.note)}</span>` : ""}
+            </span>
+          </button>
+        </li>`
+      )
+      .join("");
+    els.activeEmpty.hidden = active.length > 0;
+
+    els.parkSection.hidden = state.park.length === 0;
+    els.parkList.innerHTML = state.park
+      .map(
+        (n) => `
+        <li class="park-row">
+          <div class="park-text">${escapeHtml(n.text)}</div>
+          <button type="button" class="btn" data-unpark="${escapeHtml(n.id)}" aria-label="Remove note">✕</button>
+        </li>`
+      )
+      .join("");
+
+    els.doneSection.hidden = done.length === 0;
+    els.doneCount.textContent = String(done.length);
+    els.doneToggle.setAttribute("aria-expanded", doneOpen ? "true" : "false");
+    els.doneList.hidden = !doneOpen;
+    els.doneList.innerHTML = done
+      .map(
+        (item) => `
+        <li>
+          <button type="button" class="item" data-toggle="${escapeHtml(item.id)}">
+            <span class="box" aria-hidden="true">✓</span>
+            <span>
+              <span class="name">${escapeHtml(item.name)}</span>
+              ${item.note ? `<span class="note">${escapeHtml(item.note)}</span>` : ""}
+            </span>
+          </button>
+        </li>`
+      )
+      .join("");
+  }
+
+  function addToList() {
+    const name = els.addName.value.trim();
+    const note = els.addNote.value.trim();
+    if (!name) {
+      els.addName.focus();
+      return;
+    }
+    const state = load();
+    state.items.push({ id: uid(), name, note, done: false });
+    save(state);
+    els.addName.value = "";
+    els.addNote.value = "";
+    els.addName.focus();
+    render();
+  }
+
+  function addPark() {
+    const text = [els.addName.value.trim(), els.addNote.value.trim()]
+      .filter(Boolean)
+      .join(" — ");
+    if (!text) {
+      els.addName.focus();
+      return;
+    }
+    const state = load();
+    state.park.push({ id: uid(), text });
+    save(state);
+    els.addName.value = "";
+    els.addNote.value = "";
+    render();
+  }
+
+  function toggleItem(id) {
+    const state = load();
+    const item = state.items.find((i) => i.id === id);
+    if (!item) return;
+    item.done = !item.done;
+    save(state);
+    if (!item.done) doneOpen = true;
+    render();
+  }
+
+  function showMsg(text) {
+    els.loadMsg.hidden = false;
+    els.loadMsg.textContent = text;
+  }
+
+  document.getElementById("active-list").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-toggle]");
+    if (btn) toggleItem(btn.getAttribute("data-toggle"));
+  });
+
+  els.doneList.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-toggle]");
+    if (btn) toggleItem(btn.getAttribute("data-toggle"));
+  });
+
+  els.parkList.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-unpark]");
+    if (!btn) return;
+    const id = btn.getAttribute("data-unpark");
+    const state = load();
+    state.park = state.park.filter((n) => n.id !== id);
+    save(state);
+    render();
+  });
+
+  els.doneToggle.addEventListener("click", () => {
+    doneOpen = !doneOpen;
+    render();
+  });
+
+  els.addItem.addEventListener("click", addToList);
+  els.addPark.addEventListener("click", addPark);
+
+  els.addName.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      addToList();
+    }
+  });
+  els.addNote.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      addToList();
+    }
+  });
+
+  els.replaceBtn.addEventListener("click", () => {
+    try {
+      const rows = parsePaste(els.loadText.value);
+      if (!rows.length) {
+        showMsg("Nothing to load. Paste items first.");
+        return;
+      }
+      if (!confirm(`Replace the current list with ${rows.length} item(s)?`)) return;
+      const state = load();
+      state.items = makeItems(rows);
+      save(state);
+      doneOpen = false;
+      showMsg(`Loaded ${rows.length} item(s).`);
+      render();
+    } catch (err) {
+      showMsg("Could not parse that. Use one item per line, or a JSON array.");
+    }
+  });
+
+  els.clearBtn.addEventListener("click", () => {
+    if (!confirm("Clear the shopping list? Notes in “Saw, didn’t buy” stay.")) return;
+    const state = load();
+    state.items = [];
+    save(state);
+    doneOpen = false;
+    showMsg("List cleared.");
+    render();
+  });
+
+  render();
+})();
+
+  </script>
+</body>
+</html>
